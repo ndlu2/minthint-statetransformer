@@ -9,19 +9,33 @@ from pycparser import parse_file
 text = r"""
 int func(void)
 {
-  int x = 1;
+  char x = 'h';
   return x;
 }
 """
 class TypeDeclVisitor(c_ast.NodeVisitor):
     def __init__(self):
-        pass
+        self.types = ['int','bool','char','void']
+        self.exclude = ['argc', 'argv','main']
+        self.varTypes = []
+
     def visit_TypeDecl(self,node):
         childList = node.children()
         varName = node.declname
-        if varName==None:
+
+        if varName == None:
             return
-        print (childList[0][1].names[0] + " " + varName)
+
+        varType = childList[0][1].names[0] + " " + varName
+
+        if ((childList[0][1].names[0] in self.types and varName in self.types) or varName in self.exclude):
+            return
+
+        self.varTypes.append(varType)
+
+    def printTypes(self):
+        for var in self.varTypes:
+            print (var)
 
 class IdentifierTypeVisitor(c_ast.NodeVisitor):
     def __init__(self,IDType):
@@ -41,10 +55,12 @@ def show_decl(code):
     ast = parser.parse(code)
     v = TypeDeclVisitor()
     v.visit(ast)
+    v.printTypes()
 def show_decl_file(filename):
     ast = parse_file(filename, use_cpp=True)
     v = TypeDeclVisitor()
     v.visit(ast)
+    v.printTypes()
 
 if __name__=='__main__':
     if len(sys.argv)>1:
