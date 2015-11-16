@@ -1,0 +1,1 @@
+get rid of duplicate prints in type.75 and get rid of things that don't matter/ don't make sense i.e. int bool/ int main/ argc/ arg
