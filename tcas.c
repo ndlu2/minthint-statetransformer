@@ -1,17 +1,10 @@
 
-/*  -*- Last-Edit:  Fri Jan 29 11:13:27 1993 by Tarak S. Goradia; -*- */
-/* $Log: tcas.c,v $
- * Revision 1.2  1993/03/12  19:29:50  foster
- * Correct logic bug which didn't allow output of 2 - hf
- * */
-
-#include <stdio.h>
-
-#define OLEV       600		/* in feets/minute */
-#define MAXALTDIFF 600		/* max altitude difference in feet */
-#define MINSEP     300          /* min separation in feet */
-#define NOZCROSS   100		/* in feet */
-				/* variables */
+//Modified tcas.c to get rid of include statement for use with PyCParser
+#define OLEV       600	
+#define MAXALTDIFF 600	
+#define MINSEP     300        
+#define NOZCROSS   100	        
+			        
 
 typedef int bool;
 
@@ -23,23 +16,23 @@ int Own_Tracked_Alt;
 int Own_Tracked_Alt_Rate;
 int Other_Tracked_Alt;
 
-int Alt_Layer_Value;		/* 0, 1, 2, 3 */
+int Alt_Layer_Value;	        
 int Positive_RA_Alt_Thresh[4];
 
 int Up_Separation;
 int Down_Separation;
 
-				/* state variables */
-int Other_RAC;			/* NO_INTENT, DO_NOT_CLIMB, DO_NOT_DESCEND */
+		        
+int Other_RAC;	        
 #define NO_INTENT 0
 #define DO_NOT_CLIMB 1
 #define DO_NOT_DESCEND 2
 
-int Other_Capability;		/* TCAS_TA, OTHER */
+int Other_Capability;   
 #define TCAS_TA 1
 #define OTHER 2
 
-int Climb_Inhibit;		/* true/false */
+int Climb_Inhibit;      
 
 #define UNRESOLVED 0
 #define UPWARD_RA 1
@@ -126,9 +119,7 @@ int alt_sep_test()
 	need_upward_RA = Non_Crossing_Biased_Climb() && Own_Below_Threat();
 	need_downward_RA = Non_Crossing_Biased_Descend() && Own_Above_Threat();
 	if (need_upward_RA && need_downward_RA)
-        /* unreachable: requires Own_Below_Threat and Own_Above_Threat
-           to both be true - that requires Own_Tracked_Alt < Other_Tracked_Alt
-           and Other_Tracked_Alt < Own_Tracked_Alt, which isn't possible */
+      
 	    alt_sep = UNRESOLVED;
 	else if (need_upward_RA)
 	    alt_sep = UPWARD_RA;
