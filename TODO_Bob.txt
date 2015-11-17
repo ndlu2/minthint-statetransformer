@@ -2,3 +2,4 @@ Example file figure out what is up with it not having everything
 PyCParser does not support directives (#define)
 	assume input directives to type generator?
 	file parse skips them
+Get arrays to show as array with size
