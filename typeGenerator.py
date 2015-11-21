@@ -7,6 +7,7 @@ from pycparser import c_generator
 from pycparser import parse_file
 
 text = r"""
+
 int func(void)
 {
   char x = 'h';
