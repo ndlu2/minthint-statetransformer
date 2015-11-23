@@ -46,7 +46,7 @@ def getScopedVariables(node):
     globalVars = getGlobalVariables()
     localVars = getLocalVariables(node)
     scopedVars = globalVars + localVars
-    print (scopedVars)
+    print (",".join(scopedVars))
 def getLocalVariables(node):
     localVar = []
     if (node.decl.type.args != None):
