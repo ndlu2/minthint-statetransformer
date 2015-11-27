@@ -36,7 +36,7 @@ class TypeDeclVisitor(c_ast.NodeVisitor):
 
     def printTypes(self):
         for var in self.varTypes:
-            print (var)
+            print (var + ";")
 
 class IdentifierTypeVisitor(c_ast.NodeVisitor):
     def __init__(self,IDType):
