@@ -8,11 +8,12 @@ from pycparser import c_generator
 from pycparser import parse_file
 
 class FuncDefVisitor(c_ast.NodeVisitor):
-    def __init__(self, function, varList, scopeVarList):
+    def __init__(self, function, varList, outOfScopeVarList):
         self.name = ''
         self.function = function
         self.varList = varList
-        self.scopeVarList = scopeVarList
+        self.outOfScopeVarList = outOfScopeVarList
+        print(outOfScopeVarList)
 
     def visit_FuncDef(self,node):
         if (len(self.varList) < 1):
@@ -26,26 +27,29 @@ class FuncDefVisitor(c_ast.NodeVisitor):
                 # find the return statement within that function
                 if (isinstance(item, c_ast.Return)):
                     returnStatement = item
-                    for i, var in enumerate(self.varList):
+                    for var in self.varList:
                         outOfScope = False
                         varArr = var.split(' ')
                         # make sure all variables of the expression are in-scope
                         for v in varArr:
-                            if not any(scopeV in v for scopeV in self.scopeVarList) and v != '':
+                            if any(scopeV in v for scopeV in self.outOfScopeVarList) and v != '':
                                 outOfScope = True
-                        if not outOfScope:
+                                break
+                        if outOfScope:
+                            # replace the return statement with a print of 0
+                            node.body.block_items[idx] = c_ast.FuncCall(c_ast.ID('fprintf'), c_ast.ExprList([c_ast.ID('stdout'), c_ast.Constant('int', "0")]))
+                            break
+                        else:
                             # replace the return statement with the first printed variable
-                            print(var)
                             node.body.block_items[idx] = c_ast.FuncCall(c_ast.ID('fprintf'), c_ast.ExprList([c_ast.ID('stdout'), c_ast.Constant('str', "'%d,'"), c_ast.Constant('str', var)]))
-                            self.varList = self.varList[i+1:]
                             break
             # add the remaining print statements
-            for var in self.varList:
+            for var in self.varList[1:]:
                 # make sure all variables of the expression are in-scope
                 outOfScope = False
                 varArr = var.split(' ')
                 for v in varArr:
-                    if not any(scopeV in v for scopeV in self.scopeVarList) and v != '':
+                    if any(scopeV in v for scopeV in self.outOfScopeVarList) and v != '':
                         outOfScope = True
                         break
                 # print 0 if a variable is out of scope
@@ -60,11 +64,9 @@ class FuncDefVisitor(c_ast.NodeVisitor):
 
 def show_decl_file(cFile, function, varFile, scopeVarFile):
     varList = importVars(varFile)
-    scopeVarList = importScopedVars(scopeVarFile)
-    # Add expressions to list of in-scope variables
-    scopeVarList.extend(['+', '-', '*', '/', '||', '&&', '==', '!=', '<', '>', '<=', '>=', '()'])
+    outOfScopeVarList = importOutOfScopeVars(scopeVarFile)
     ast = parse_file(cFile, use_cpp=True)
-    v = FuncDefVisitor("alt_sep_test", varList, scopeVarList)
+    v = FuncDefVisitor("alt_sep_test", varList, outOfScopeVarList)
     v.visit(ast)
     generator = c_generator.CGenerator()
     print(generator.visit(ast))
@@ -79,7 +81,7 @@ def importVars(varFile):
         except Exception as e:
             print(str(e))
 
-def importScopedVars(scopeVarFile):
+def importOutOfScopeVars(scopeVarFile):
     with open(scopeVarFile, 'rt') as f:
         reader = csv.reader(f)
         lists = list(reader)
@@ -90,7 +92,7 @@ if __name__=='__main__':
             cFile = sys.argv[1] # tcas.c
             function = sys.argv[2] # alt_sep_test
             varFile = sys.argv[3] # attrmap.75
-            scopeVarFile = sys.argv[4] # scopedVariables output
+            scopeVarFile = sys.argv[4] # outOfScopeVariables output
             show_decl_file(cFile, function, varFile, scopeVarFile)
 
 

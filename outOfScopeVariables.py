@@ -41,9 +41,9 @@ class DeclVisitor(c_ast.NodeVisitor):
     def __init__(self):
         self.name =""
     def visit_Decl(self,node):
-        self.name = node.name
-        allVar.append(self.name)
-
+        if type(node.type) != c_ast.FuncDecl:
+            self.name = node.name
+            allVar.append(self.name)
 
 def getScopedVariables(node):
     getGlobalVariables()
