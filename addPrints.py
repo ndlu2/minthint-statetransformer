@@ -13,7 +13,6 @@ class FuncDefVisitor(c_ast.NodeVisitor):
         self.function = function
         self.varList = varList
         self.outOfScopeVarList = outOfScopeVarList
-        print(outOfScopeVarList)
 
     def visit_FuncDef(self,node):
         if (len(self.varList) < 1):
@@ -66,7 +65,7 @@ def show_decl_file(cFile, function, varFile, scopeVarFile):
     varList = importVars(varFile)
     outOfScopeVarList = importOutOfScopeVars(scopeVarFile)
     ast = parse_file(cFile, use_cpp=True)
-    v = FuncDefVisitor("alt_sep_test", varList, outOfScopeVarList)
+    v = FuncDefVisitor(function, varList, outOfScopeVarList)
     v.visit(ast)
     generator = c_generator.CGenerator()
     print(generator.visit(ast))
