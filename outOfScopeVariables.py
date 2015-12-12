@@ -81,3 +81,4 @@ if __name__=='__main__':
     scopedVars.append(function)
     outOfScopeVar = [obj for obj in allVar if obj not in scopedVars]
     print (",".join(outOfScopeVar))
+    #print(outOfScopeVar)
