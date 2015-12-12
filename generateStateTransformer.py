@@ -91,7 +91,8 @@ if __name__=='__main__':
 	with open(passingTestsFile) as lines:
 		for line in lines:
 			try:
-				result = subprocess.check_output(passingModifiedFile[:-1] + 'exe ' + line[:-1], shell=True)
+				process = subprocess.Popen(passingModifiedFile[:-1] + 'exe ' + line[:-1], shell=True, stdout=subprocess.PIPE)
+				result, err = process.communicate()
 				stateTransformer += result.decode("utf-8")[:-1]
 			except subprocess.CalledProcessError as e:
 				print(e.output)
