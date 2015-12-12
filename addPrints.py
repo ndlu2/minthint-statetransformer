@@ -53,16 +53,16 @@ class FuncDefVisitor(c_ast.NodeVisitor):
                         break
                 # print 0 if a variable is out of scope
                 if outOfScope:
-                    node.body.block_items.append(c_ast.FuncCall(c_ast.ID('fprintf'), c_ast.ExprList([c_ast.ID('stdout'), c_ast.Constant('str', '"0"')])))
-                # print the expression if all variables are in scope
+                    node.body.block_items.append(c_ast.FuncCall(c_ast.ID('fprintf'), c_ast.ExprList([c_ast.ID('stdout'), c_ast.Constant('str', '"%d,"'),  c_ast.Constant('str', '"0"')])))
+		# print the expression if all variables are in scope
                 else:
                     if ('/' in var):
                         denom = var[var.index('/')+1:]
                         binaryOp = c_ast.BinaryOp('==', c_ast.Constant('str', denom), c_ast.Constant('int', '0'))
-                        ifTrue = c_ast.Compound([c_ast.FuncCall(c_ast.ID('fprintf'), c_ast.ExprList([c_ast.ID('stdout'), c_ast.Constant('str', '"%d,"'), c_ast.Constant('int', '0')]))])
+                        ifTrue = c_ast.Compound([c_ast.FuncCall(c_ast.ID('fprintf'), c_ast.ExprList([c_ast.ID('stdout'), c_ast.Constant('str', '"NaN"')]))])
                         ifFalse = c_ast.Compound([c_ast.FuncCall(c_ast.ID('fprintf'), c_ast.ExprList([c_ast.ID('stdout'), c_ast.Constant('str', '"%d,"'), c_ast.Constant('str', var)]))])
                         node.body.block_items.append(c_ast.If(binaryOp, ifTrue, ifFalse))
-                    else:
+		    else:
                         node.body.block_items.append(c_ast.FuncCall(c_ast.ID('fprintf'), c_ast.ExprList([c_ast.ID('stdout'), c_ast.Constant('str', '"%d,"'), c_ast.Constant('str', var)])))
             # add a newline character and the original return statement at the end
             node.body.block_items.append(c_ast.FuncCall(c_ast.ID('fprintf'), c_ast.ExprList([c_ast.ID('stdout'), c_ast.Constant('str', '"\\n"')])))

@@ -75,10 +75,10 @@ if __name__=='__main__':
 		varFile = sys.argv[3] # attrmap.75
 		faultyLine = int(sys.argv[4])
 	else:
-		cFile = 'tcas.c'
-		testFxn = 'alt_sep_test'
+		cFile = 'mh_tcas.c'
+		testFxn = 'Non_Crossing_Biased_Climb'
 		varFile = 'attrmap.75'
-		faultyLine = 120
+		faultyLine = 76
 
 	# Remove include statements from c file
 	includeStatements = ''
