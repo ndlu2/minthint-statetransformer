@@ -14,11 +14,12 @@ int func(void)
   return x;
 }
 """
+varTypes = []
+funcs = []
 class TypeDeclVisitor(c_ast.NodeVisitor):
     def __init__(self):
         self.types = ['int','bool','char','void']
         self.exclude = ['argc', 'argv','main']
-        self.varTypes = []
 
     def visit_TypeDecl(self,node):
         childList = node.children()
@@ -31,12 +32,21 @@ class TypeDeclVisitor(c_ast.NodeVisitor):
 
         if ((childList[0][1].names[0] in self.types and varName in self.types) or varName in self.exclude):
             return
+	
+	if (varName in funcs):
+	    if (childList[0][1].names[0] =='bool'):
+                return	
+	    varType = varType + "()"
 
-        self.varTypes.append(varType)
+        varTypes.append(varType)
 
-    def printTypes(self):
-        for var in self.varTypes:
-            print (var + ";")
+
+class FuncDefVisitor(c_ast.NodeVisitor):
+    def _init__(self,node):
+	pass
+    def visit_FuncDef(self,node):		
+	funcName = node.children()[0][1].name
+	funcs.append(funcName)
 
 class IdentifierTypeVisitor(c_ast.NodeVisitor):
     def __init__(self,IDType):
@@ -44,6 +54,12 @@ class IdentifierTypeVisitor(c_ast.NodeVisitor):
     def visit_IdentifierType(self,node):
         if node.names[0] == self.IDType:
             print (self.IDType)
+
+def printTypes():
+    for var in varTypes:
+	
+        print (var + ";")
+
 
 def show_id_type(code, typ):
     parser = c_parser.CParser()
@@ -54,14 +70,20 @@ def show_id_type(code, typ):
 def show_decl(code):
     parser = c_parser.CParser()
     ast = parser.parse(code)
+    v = FuncDefVisitor()
+    v.visit(ast)
     v = TypeDeclVisitor()
     v.visit(ast)
-    v.printTypes()
+    printTypes()
+
 def show_decl_file(filename):
     ast = parse_file(filename, use_cpp=True)
+    v = FuncDefVisitor()
+    v.visit(ast)
     v = TypeDeclVisitor()
     v.visit(ast)
-    v.printTypes()
+    printTypes()
+
 
 if __name__=='__main__':
     if len(sys.argv)>1:

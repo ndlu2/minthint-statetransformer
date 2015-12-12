@@ -2,13 +2,14 @@ import csv
 import sys
 import os
 import subprocess
+import signal
 
 outOfScopeVariablesFile = 'outOfScopeVariables.txt'
 passingModifiedFile = 'modifiedPassing.c'
 failingModifiedFile = 'modifiedFailing.c'
 replacedFailingFile = 'replacedFailing.c'
-passingTestsFile = 'passingTests2.txt'
-failingTestsFile = 'failingTests2.txt'
+passingTestsFile = 'passingTests.txt'
+failingTestsFile = 'failingTests.txt'
 
 def findOutOfScopeVariables(cFile, testFxn):
 	process = subprocess.Popen('python outOfScopeVariables.py ' + cFile + ' ' + testFxn, shell=True, stdout=subprocess.PIPE)
@@ -31,7 +32,8 @@ def generateFailingProgram(cFile, faultyLine, expectedOutput, testFxn, includeSt
 	failingProgram, err = process.communicate()
 	failingProgram = failingProgram.decode("utf-8")[:-1]
 	f = open(failingModifiedFile, 'w')
-	f.write(includeStatements + defineStatements + failingProgram)
+	kleeInclude = "#include <klee/klee.h>\n"
+	f.write(includeStatements + kleeInclude + defineStatements + failingProgram)
 	f.close()
 
 def replaceFailingProgram(cFile, faultyLine, kleeVal, includeStatements, defineStatements):
@@ -45,6 +47,26 @@ def replaceFailingProgram(cFile, faultyLine, kleeVal, includeStatements, defineS
 def compileProgram(filename):
 	process = subprocess.Popen('gcc ' + filename + ' -o ' + filename[:-1] + 'exe', shell=True, stdout=subprocess.PIPE)
 	process.wait()
+
+def getKleeOutput():
+	process = subprocess.Popen('clang -emit-llvm -c -g ' + failingModifiedFile, shell=True, stdout=subprocess.PIPE)
+	process.wait()
+	signal.signal(signal.SIGALRM, alarm_handler)
+	signal.alarm(10)
+	try:
+		process = subprocess.Popen('klee -entry-point=test ' + failingModifiedFile[:-1] + 'bc', shell=True, stdout=subprocess.PIPE)
+		process.wait()
+	except Alarm:
+		return '0'
+	process = subprocess.Popen('ktest-tool --write-ints klee-last/test000001.ktest', shell=True, stdout=subprocess.PIPE)
+	result, err = process.communicate()
+	result = result.decode("utf-8")[:-1]
+	return result[result.rfind(' ')+1:]
+
+class Alarm(Exception):
+	pass
+def alarm_handler(signum, frame):
+	raise Alarm
 
 if __name__=='__main__':
 	if len(sys.argv)>4:
@@ -99,6 +121,7 @@ if __name__=='__main__':
 
 	program = ''
 	removedLines = 0
+	newFaultyLine = 0
 	with open(passingModifiedFile) as lines:
 		i = 0
 		for line in lines:
@@ -112,7 +135,7 @@ if __name__=='__main__':
 			else:
 				program += line
 			if (faultyLineStr in line):
-				faultyLine = i
+				newFaultyLine = i
 	f = open(passingModifiedFile,'w')
 	f.write(program)
 	f.close()
@@ -121,10 +144,8 @@ if __name__=='__main__':
 		for line in lines:
 			expectedOutput = line[:line.index(' ')]
 			generateFailingProgram(cFile, str(faultyLine), expectedOutput, testFxn, includeStatements, defineStatements)
-			#compileProgram(failingModifiedFile)
-			# run klee
-			kleeVal = '0'
-			replaceFailingProgram(passingModifiedFile, str(faultyLine), kleeVal, includeStatements, defineStatements)
+			kleeVal = getKleeOutput()
+			replaceFailingProgram(passingModifiedFile, str(newFaultyLine), kleeVal, includeStatements, defineStatements)
 			compileProgram(replacedFailingFile)
 			inputLine = line[line.index(' ')+1:]
 			process = subprocess.Popen('./' + replacedFailingFile[:-1] + 'exe ' + inputLine, shell=True, stdout=subprocess.PIPE)
