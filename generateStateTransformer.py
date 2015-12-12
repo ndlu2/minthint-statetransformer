@@ -7,41 +7,36 @@ outOfScopeVariablesFile = 'outOfScopeVariables.txt'
 passingModifiedFile = 'modifiedPassing.c'
 failingModifiedFile = 'modifiedFailing.c'
 replacedFailingFile = 'replacedFailing.c'
-passingTestsFile = 'passingTests.txt'
-failingTestsFile = 'failingTests.txt'
+passingTestsFile = 'passingTests2.txt'
+failingTestsFile = 'failingTests2.txt'
 
 def findOutOfScopeVariables(cFile, testFxn):
-	oosVars = subprocess.check_output('python outOfScopeVariables.py ' + cFile + ' ' + testFxn, shell=True)
+	process = subprocess.Popen('python outOfScopeVariables.py ' + cFile + ' ' + testFxn, shell=True, stdout=subprocess.PIPE)
+	oosVars, err = process.communicate()
 	oosVars = oosVars.decode("utf-8")[:-1]
 	f = open(outOfScopeVariablesFile,'w')
 	f.write(oosVars)
 	f.close()
 
 def generatePassingProgram(cFile, testFxn, varFile, includeStatements, defineStatements):
-	try:
-		passingProgram = subprocess.check_output('python addPrints.py ' + cFile + ' ' + testFxn + ' ' + varFile + ' ' + outOfScopeVariablesFile, shell=True)
-	except subprocess.CalledProcessError as e:
-		print(e.output)
+	process = subprocess.Popen('python addPrints.py ' + cFile + ' ' + testFxn + ' ' + varFile + ' ' + outOfScopeVariablesFile, shell=True, stdout=subprocess.PIPE)
+	passingProgram, err = process.communicate()
 	passingProgram = passingProgram.decode("utf-8")[:-1]
 	f = open(passingModifiedFile, 'w')
 	f.write(includeStatements + defineStatements + passingProgram)
 	f.close()
 
 def generateFailingProgram(cFile, faultyLine, expectedOutput, testFxn, includeStatements, defineStatements):
-	try:
-		failingProgram = subprocess.check_output('python failingModification.py ' + cFile + ' ' + faultyLine + ' ' + expectedOutput + ' ' + testFxn, shell=True)
-	except subprocess.CalledProcessError as e:
-		print(e.output)
+	process = subprocess.Popen('python failingModification.py ' + cFile + ' ' + faultyLine + ' ' + expectedOutput + ' ' + testFxn, shell=True, stdout=subprocess.PIPE)
+	failingProgram, err = process.communicate()
 	failingProgram = failingProgram.decode("utf-8")[:-1]
 	f = open(failingModifiedFile, 'w')
 	f.write(includeStatements + defineStatements + failingProgram)
 	f.close()
 
 def replaceFailingProgram(cFile, faultyLine, kleeVal, includeStatements, defineStatements):
-	try:
-		failingProgram = subprocess.check_output('python replaceKleeMod.py ' + cFile + ' ' + faultyLine + ' ' + kleeVal, shell=True)
-	except subprocess.CalledProcessError as e:
-		print(e.output)
+	process = subprocess.Popen('python replaceKleeMod.py ' + cFile + ' ' + faultyLine + ' ' + kleeVal, shell=True, stdout=subprocess.PIPE)
+	failingProgram, err = process.communicate()
 	failingProgram = failingProgram.decode("utf-8")[:-1]
 	f = open(replacedFailingFile, 'w')
 	f.write(includeStatements + defineStatements + failingProgram)
@@ -130,11 +125,9 @@ if __name__=='__main__':
 			kleeVal = '0'
 			replaceFailingProgram(passingModifiedFile, str(faultyLine), kleeVal, includeStatements, defineStatements)
 			compileProgram(replacedFailingFile)
-			try:
-				result = subprocess.check_output(replacedFailingFile[:-1] + 'exe ' + line[:-1], shell=True)
-				stateTransformer += result.decode("utf-8")[:-1]
-			except subprocess.CalledProcessError as e:
-				print(e.output)
+			process = subprocess.Popen(replacedFailingFile[:-1] + 'exe ' + line[:-1], shell=True, stdout=subprocess.PIPE)
+			result, err = process.communicate()
+			stateTransformer += result.decode("utf-8")[:-1]
 
 	f = open('v75.complete.csv','w')
 	f.write(stateTransformer[:-1])
