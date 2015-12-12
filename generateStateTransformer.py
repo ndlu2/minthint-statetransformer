@@ -112,12 +112,12 @@ if __name__=='__main__':
 	stateTransformer = ''
 	with open(passingTestsFile) as lines:
 		for line in lines:
-			try:
+			if (len(line) > 1):
 				process = subprocess.Popen('./' + passingModifiedFile[:-1] + 'exe ' + line[:-1], shell=True, stdout=subprocess.PIPE)
 				result, err = process.communicate()
-				stateTransformer += result.decode("utf-8")[:-1]
-			except subprocess.CalledProcessError as e:
-				print(e.output)
+				result = result.decode("utf-8")[:-1]
+				if (len(result) > 5):
+					stateTransformer += result
 
 	program = ''
 	removedLines = 0
@@ -142,15 +142,18 @@ if __name__=='__main__':
 
 	with open(failingTestsFile) as lines:
 		for line in lines:
-			expectedOutput = line[:line.index(' ')]
-			generateFailingProgram(cFile, str(faultyLine), expectedOutput, testFxn, includeStatements, defineStatements)
-			kleeVal = getKleeOutput()
-			replaceFailingProgram(passingModifiedFile, str(newFaultyLine), kleeVal, includeStatements, defineStatements)
-			compileProgram(replacedFailingFile)
-			inputLine = line[line.index(' ')+1:]
-			process = subprocess.Popen('./' + replacedFailingFile[:-1] + 'exe ' + inputLine, shell=True, stdout=subprocess.PIPE)
-			result, err = process.communicate()
-			stateTransformer += result.decode("utf-8")[:-1]
+			if (len(line) > 1):
+				expectedOutput = line[:line.index(' ')]
+				generateFailingProgram(cFile, str(faultyLine), expectedOutput, testFxn, includeStatements, defineStatements)
+				kleeVal = getKleeOutput()
+				replaceFailingProgram(passingModifiedFile, str(newFaultyLine), kleeVal, includeStatements, defineStatements)
+				compileProgram(replacedFailingFile)
+				inputLine = line[line.index(' ')+1:]
+				process = subprocess.Popen('./' + replacedFailingFile[:-1] + 'exe ' + inputLine, shell=True, stdout=subprocess.PIPE)
+				result, err = process.communicate()
+				result = result.decode("utf-8")[:-1]
+				if (len(result) > 5):
+					stateTransformer += result
 
 	f = open('v75.complete.csv','w')
 	f.write(stateTransformer[:-1])
