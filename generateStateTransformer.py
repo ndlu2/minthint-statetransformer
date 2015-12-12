@@ -91,7 +91,7 @@ if __name__=='__main__':
 	with open(passingTestsFile) as lines:
 		for line in lines:
 			try:
-				process = subprocess.Popen(passingModifiedFile[:-1] + 'exe ' + line[:-1], shell=True, stdout=subprocess.PIPE)
+				process = subprocess.Popen('./' + passingModifiedFile[:-1] + 'exe ' + line[:-1], shell=True, stdout=subprocess.PIPE)
 				result, err = process.communicate()
 				stateTransformer += result.decode("utf-8")[:-1]
 			except subprocess.CalledProcessError as e:
@@ -126,7 +126,8 @@ if __name__=='__main__':
 			kleeVal = '0'
 			replaceFailingProgram(passingModifiedFile, str(faultyLine), kleeVal, includeStatements, defineStatements)
 			compileProgram(replacedFailingFile)
-			process = subprocess.Popen(replacedFailingFile[:-1] + 'exe ' + line[:-1], shell=True, stdout=subprocess.PIPE)
+			inputLine = line[:line.rfind(' ')]
+			process = subprocess.Popen('./' + replacedFailingFile[:-1] + 'exe ' + inputLine, shell=True, stdout=subprocess.PIPE)
 			result, err = process.communicate()
 			stateTransformer += result.decode("utf-8")[:-1]
 
