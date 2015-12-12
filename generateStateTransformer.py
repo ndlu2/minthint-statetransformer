@@ -126,7 +126,7 @@ if __name__=='__main__':
 			kleeVal = '0'
 			replaceFailingProgram(passingModifiedFile, str(faultyLine), kleeVal, includeStatements, defineStatements)
 			compileProgram(replacedFailingFile)
-			inputLine = line[:line.rfind(' ')]
+			inputLine = line[line.index(' ')+1:]
 			process = subprocess.Popen('./' + replacedFailingFile[:-1] + 'exe ' + inputLine, shell=True, stdout=subprocess.PIPE)
 			result, err = process.communicate()
 			stateTransformer += result.decode("utf-8")[:-1]
