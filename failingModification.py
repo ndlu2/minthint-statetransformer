@@ -72,22 +72,34 @@ class NodeVisitor(object):
                 else:
                     return res
 
-def addTestFunction(ast, expectedOutput, testFxn):
+def addTestFunction(ast, expectedOutput, testFxn, initList):
+    var1 = c_ast.Assignment('=', c_ast.ID('Cur_Vertical_Sep'), c_ast.Constant('int', initList[0]))
+    var2 = c_ast.Assignment('=', c_ast.ID('High_Confidence'), c_ast.Constant('int', initList[1]))
+    var3 = c_ast.Assignment('=', c_ast.ID('Two_of_Three_Reports_Valid'), c_ast.Constant('int', initList[2]))
+    var4 = c_ast.Assignment('=', c_ast.ID('Own_Tracked_Alt'), c_ast.Constant('int', initList[3]))
+    var5 = c_ast.Assignment('=', c_ast.ID('Own_Tracked_Alt_Rate'), c_ast.Constant('int', initList[4]))
+    var6 = c_ast.Assignment('=', c_ast.ID('Other_Tracked_Alt'), c_ast.Constant('int', initList[5]))
+    var7 = c_ast.Assignment('=', c_ast.ID('Alt_Layer_Value'), c_ast.Constant('int', initList[6]))
+    var8 = c_ast.Assignment('=', c_ast.ID('Up_Separation'), c_ast.Constant('int', initList[7]))
+    var9 = c_ast.Assignment('=', c_ast.ID('Down_Separation'), c_ast.Constant('int', initList[8]))
+    var10 = c_ast.Assignment('=', c_ast.ID('Other_RAC'), c_ast.Constant('int', initList[9]))
+    var11 = c_ast.Assignment('=', c_ast.ID('Other_Capability'), c_ast.Constant('int', initList[10]))
+    var12 = c_ast.Assignment('=', c_ast.ID('Climb_Inhibit'), c_ast.Constant('int', initList[11]))
     fxnDecl = c_ast.FuncDecl(None, c_ast.TypeDecl('test', [], c_ast.IdentifierType(['void'])))
     fxnCall = c_ast.FuncCall(c_ast.ID(testFxn), c_ast.ExprList([]))
     binaryOp = c_ast.BinaryOp('==', fxnCall, c_ast.Constant('int', expectedOutput))
     ifFalse = c_ast.Compound([c_ast.FuncCall(c_ast.ID('klee_silent_exit'), c_ast.ExprList([c_ast.Constant('int', '0')]))])
     ifTrue = c_ast.Compound([])
-    blockItems = [c_ast.If(binaryOp, ifTrue, ifFalse)]
+    blockItems = [var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, var12, c_ast.If(binaryOp, ifTrue, ifFalse)]
     fxnBody = c_ast.Compound(blockItems)
     fxnNode = c_ast.FuncDef(fxnDecl, None, fxnBody)
     ast.ext.append(fxnNode)
 
-def show_decl_file(cFile, faultyLine, expectedOutput, testFxn):
+def show_decl_file(cFile, faultyLine, expectedOutput, testFxn, initList):
     ast = parse_file(cFile, use_cpp=True)
     v = NodeVisitor(faultyLine)
     v.visit(ast)
-    addTestFunction(ast, expectedOutput, testFxn)
+    addTestFunction(ast, expectedOutput, testFxn, initList)
     generator = c_generator.CGenerator()
     print(generator.visit(ast))
 
@@ -97,6 +109,7 @@ if __name__=='__main__':
             faultyLine = sys.argv[2] # faulty line number
             expectedOutput = sys.argv[3] # expected output
             testFxn = sys.argv[4]
-            show_decl_file(cFile, faultyLine, expectedOutput, testFxn)
+            initList = sys.argv[5:]
+            show_decl_file(cFile, faultyLine, expectedOutput, testFxn, initList)
 
 
