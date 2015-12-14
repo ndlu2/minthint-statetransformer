@@ -27,8 +27,8 @@ def generatePassingProgram(cFile, testFxn, varFile, includeStatements, defineSta
 	f.write(includeStatements + defineStatements + passingProgram)
 	f.close()
 
-def generateFailingProgram(cFile, faultyLine, expectedOutput, testFxn, includeStatements, defineStatements):
-	process = subprocess.Popen('python failingModification.py ' + cFile + ' ' + faultyLine + ' ' + expectedOutput + ' ' + testFxn, shell=True, stdout=subprocess.PIPE)
+def generateFailingProgram(cFile, faultyLine, expectedOutput, testFxn, initList, includeStatements, defineStatements):
+	process = subprocess.Popen('python failingModification.py ' + cFile + ' ' + faultyLine + ' ' + expectedOutput + ' ' + testFxn + ' ' + initList, shell=True, stdout=subprocess.PIPE)
 	failingProgram, err = process.communicate()
 	failingProgram = failingProgram.decode("utf-8")[:-1]
 	f = open(failingModifiedFile, 'w')
@@ -100,6 +100,8 @@ if __name__=='__main__':
 				program += line
 			if (i == faultyLine):
 				faultyLineStr = line.strip()
+				if ('//' in faultyLineStr):
+					faultyLineStr = faultyLineStr[:faultyLineStr.index('//')-2]
 	faultyLine -= removedLines
 	cFile = 'cFileForPyc.c'
 	f = open(cFile,'w')
@@ -144,7 +146,7 @@ if __name__=='__main__':
 		for line in lines:
 			if (len(line) > 1):
 				expectedOutput = line[:line.index(' ')]
-				generateFailingProgram(cFile, str(faultyLine), expectedOutput, testFxn, includeStatements, defineStatements)
+				generateFailingProgram(cFile, str(faultyLine), expectedOutput, testFxn, line[line.index(' ')+1:], includeStatements, defineStatements)
 				kleeVal = getKleeOutput()
 				replaceFailingProgram(passingModifiedFile, str(newFaultyLine), kleeVal, includeStatements, defineStatements)
 				compileProgram(replacedFailingFile)
@@ -156,5 +158,5 @@ if __name__=='__main__':
 					stateTransformer += result
 
 	f = open('v75.complete.csv','w')
-	f.write(stateTransformer[:-1])
+	f.write(stateTransformer)
 	f.close()

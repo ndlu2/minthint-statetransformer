@@ -73,6 +73,7 @@ class NodeVisitor(object):
                     return res
 
 def addTestFunction(ast, expectedOutput, testFxn, initList):
+    fun = c_ast.FuncCall(c_ast.ID('initialize'), c_ast.ExprList([]))
     var1 = c_ast.Assignment('=', c_ast.ID('Cur_Vertical_Sep'), c_ast.Constant('int', initList[0]))
     var2 = c_ast.Assignment('=', c_ast.ID('High_Confidence'), c_ast.Constant('int', initList[1]))
     var3 = c_ast.Assignment('=', c_ast.ID('Two_of_Three_Reports_Valid'), c_ast.Constant('int', initList[2]))
@@ -86,11 +87,11 @@ def addTestFunction(ast, expectedOutput, testFxn, initList):
     var11 = c_ast.Assignment('=', c_ast.ID('Other_Capability'), c_ast.Constant('int', initList[10]))
     var12 = c_ast.Assignment('=', c_ast.ID('Climb_Inhibit'), c_ast.Constant('int', initList[11]))
     fxnDecl = c_ast.FuncDecl(None, c_ast.TypeDecl('test', [], c_ast.IdentifierType(['void'])))
-    fxnCall = c_ast.FuncCall(c_ast.ID(testFxn), c_ast.ExprList([]))
+    fxnCall = c_ast.FuncCall(c_ast.ID('alt_sep_test'), c_ast.ExprList([]))
     binaryOp = c_ast.BinaryOp('==', fxnCall, c_ast.Constant('int', expectedOutput))
     ifFalse = c_ast.Compound([c_ast.FuncCall(c_ast.ID('klee_silent_exit'), c_ast.ExprList([c_ast.Constant('int', '0')]))])
     ifTrue = c_ast.Compound([])
-    blockItems = [var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, var12, c_ast.If(binaryOp, ifTrue, ifFalse)]
+    blockItems = [fun, var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, var12, c_ast.If(binaryOp, ifTrue, ifFalse)]
     fxnBody = c_ast.Compound(blockItems)
     fxnNode = c_ast.FuncDef(fxnDecl, None, fxnBody)
     ast.ext.append(fxnNode)

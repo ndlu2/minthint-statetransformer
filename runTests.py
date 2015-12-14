@@ -4,20 +4,20 @@ import sys
 
 passing = ''
 failed = ''
-with open('testplans/universe') as tests:
+with open('universe') as tests:
 	try:
 		for line in tests:
 			# run the original and faulty program
-			process = subprocess.Popen(os.getcwd() + '/source/tcas.exe ' + line, shell=True, stdout=subprocess.PIPE)
+			process = subprocess.Popen('./mh_tcas_true.exe ' + line, shell=True, stdout=subprocess.PIPE)
 			source_output, err = process.communicate()
-			process = subprocess.Popen(os.getcwd() + '/versions/tcas.exe ' + line, shell=True, stdout=subprocess.PIPE)
+			process = subprocess.Popen('./mh_tcas.exe ' + line, shell=True, stdout=subprocess.PIPE)
 			alt_output, err = process.communicate()
 			if source_output == alt_output:
 				# test passed - write inputs to passingTests.txt
 				passing += line
 			else:
 				# test failed - write correct output and inputs to failedTests.txt
-				failed += source_output.decode("utf-8")[:-1] + line
+				failed += source_output.decode("utf-8")[:-1] + ' ' + line
 	except Exception as e:
 		print(str(e))
 f = open('passingTests.txt','w')
