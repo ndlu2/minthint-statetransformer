@@ -4,7 +4,7 @@ import sys
 
 passing = ''
 failed = ''
-with open('universe') as tests:
+with open('mhUniverse') as tests:
 	try:
 		for line in tests:
 			# run the original and faulty program

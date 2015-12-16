@@ -73,10 +73,11 @@ bool Non_Crossing_Biased_Climb()
     upward_preferred = Inhibit_Biased_Climb() > Down_Separation;
     if (upward_preferred)
     {
-	result = !(Own_Below_Threat()) || ((Own_Below_Threat()) && (!(Down_Separation >= ALIM())));
+	result = (Own_Tracked_Alt >= Other_Tracked_Alt) || ((Own_Tracked_Alt < Other_Tracked_Alt) && (Down_Separation <= ALIM())); // FAULTY
+	//result = (Own_Tracked_Alt >= Other_Tracked_Alt) || ((Own_Tracked_Alt < Other_Tracked_Alt) && (Down_Separation < ALIM())); // REPAIR
     }
     else
-    {	
+    {
 	result = Own_Above_Threat() && (Cur_Vertical_Sep >= MINSEP) && (Up_Separation >= ALIM());
     }
     return result;
@@ -169,6 +170,7 @@ char *argv[];
     Other_Capability = atoi(argv[11]);
     Climb_Inhibit = atoi(argv[12]);
 
-    fprintf(stdout, "%d\n", alt_sep_test());
+    int newVal = alt_sep_test();
+    fprintf(stdout, "\n");
     exit(0);
 }

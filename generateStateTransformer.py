@@ -77,7 +77,7 @@ if __name__=='__main__':
 		faultyLine = int(sys.argv[5])
 		initVarsFile = sys.argv[6]
 	else:
-		cFile = 'mh_tcas.c'
+		cFile = 'tcas.c'
 		testFxn = 'alt_sep_test'
 		faultFxn = 'Non_Crossing_Biased_Climb'
 		varFile = 'attrmap.75'
