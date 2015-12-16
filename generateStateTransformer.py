@@ -11,24 +11,24 @@ replacedFailingFile = 'replacedFailing.c'
 passingTestsFile = 'passingTests.txt'
 failingTestsFile = 'failingTests.txt'
 
-def findOutOfScopeVariables(cFile, testFxn):
-	process = subprocess.Popen('python outOfScopeVariables.py ' + cFile + ' ' + testFxn, shell=True, stdout=subprocess.PIPE)
+def findOutOfScopeVariables(cFile, faultFxn):
+	process = subprocess.Popen('python outOfScopeVariables.py ' + cFile + ' ' + faultFxn, shell=True, stdout=subprocess.PIPE)
 	oosVars, err = process.communicate()
 	oosVars = oosVars.decode("utf-8")[:-1]
 	f = open(outOfScopeVariablesFile,'w')
 	f.write(oosVars)
 	f.close()
 
-def generatePassingProgram(cFile, testFxn, varFile, includeStatements, defineStatements):
-	process = subprocess.Popen('python addPrints.py ' + cFile + ' ' + testFxn + ' ' + varFile + ' ' + outOfScopeVariablesFile, shell=True, stdout=subprocess.PIPE)
+def generatePassingProgram(cFile, faultFxn, varFile, includeStatements, defineStatements):
+	process = subprocess.Popen('python addPrints.py ' + cFile + ' ' + faultFxn + ' ' + varFile + ' ' + outOfScopeVariablesFile, shell=True, stdout=subprocess.PIPE)
 	passingProgram, err = process.communicate()
 	passingProgram = passingProgram.decode("utf-8")[:-1]
 	f = open(passingModifiedFile, 'w')
 	f.write(includeStatements + defineStatements + passingProgram)
 	f.close()
 
-def generateFailingProgram(cFile, faultyLine, expectedOutput, testFxn, initList, includeStatements, defineStatements):
-	process = subprocess.Popen('python failingModification.py ' + cFile + ' ' + faultyLine + ' ' + expectedOutput + ' ' + testFxn + ' ' + initList, shell=True, stdout=subprocess.PIPE)
+def generateFailingProgram(cFile, faultyLine, expectedOutput, testFxn, initVarsFile, initList, includeStatements, defineStatements):
+	process = subprocess.Popen('python failingModification.py ' + cFile + ' ' + faultyLine + ' ' + expectedOutput + ' ' + testFxn + ' ' + initVarsFile + ' ' + initList, shell=True, stdout=subprocess.PIPE)
 	failingProgram, err = process.communicate()
 	failingProgram = failingProgram.decode("utf-8")[:-1]
 	f = open(failingModifiedFile, 'w')
@@ -54,7 +54,7 @@ def getKleeOutput():
 	signal.signal(signal.SIGALRM, alarm_handler)
 	signal.alarm(10)
 	try:
-		process = subprocess.Popen('klee -entry-point=test ' + failingModifiedFile[:-1] + 'bc', shell=True, stdout=subprocess.PIPE)
+		process = subprocess.Popen('klee -entry-point=klee_test_entry ' + failingModifiedFile[:-1] + 'bc', shell=True, stdout=subprocess.PIPE)
 		process.wait()
 	except Alarm:
 		return '0'
@@ -69,16 +69,20 @@ def alarm_handler(signum, frame):
 	raise Alarm
 
 if __name__=='__main__':
-	if len(sys.argv)>4:
+	if len(sys.argv)>6:
 		cFile = sys.argv[1] # tcas.c
 		testFxn = sys.argv[2] # alt_sep_test
-		varFile = sys.argv[3] # attrmap.75
-		faultyLine = int(sys.argv[4])
+		faultFxn = sys.argv[3] # Non_Crossing_Biased_Climb
+		varFile = sys.argv[4] # attrmap.75
+		faultyLine = int(sys.argv[5])
+		initVarsFile = sys.argv[6]
 	else:
 		cFile = 'mh_tcas.c'
-		testFxn = 'Non_Crossing_Biased_Climb'
+		testFxn = 'alt_sep_test'
+		faultFxn = 'Non_Crossing_Biased_Climb'
 		varFile = 'attrmap.75'
 		faultyLine = 76
+		initVarsFile = 'init_vars.txt'
 
 	# Remove include statements from c file
 	includeStatements = ''
@@ -108,8 +112,8 @@ if __name__=='__main__':
 	f.write(program)
 	f.close()
 
-	findOutOfScopeVariables(cFile, testFxn)
-	generatePassingProgram(cFile, testFxn, varFile, includeStatements, defineStatements)
+	findOutOfScopeVariables(cFile, faultFxn)
+	generatePassingProgram(cFile, faultFxn, varFile, includeStatements, defineStatements)
 	compileProgram(passingModifiedFile)
 	stateTransformer = ''
 	with open(passingTestsFile) as lines:
@@ -146,7 +150,7 @@ if __name__=='__main__':
 		for line in lines:
 			if (len(line) > 1):
 				expectedOutput = line[:line.index(' ')]
-				generateFailingProgram(cFile, str(faultyLine), expectedOutput, testFxn, line[line.index(' ')+1:], includeStatements, defineStatements)
+				generateFailingProgram(cFile, str(faultyLine), expectedOutput, testFxn, initVarsFile, line[line.index(' ')+1:], includeStatements, defineStatements)
 				kleeVal = getKleeOutput()
 				replaceFailingProgram(passingModifiedFile, str(newFaultyLine), kleeVal, includeStatements, defineStatements)
 				compileProgram(replacedFailingFile)
