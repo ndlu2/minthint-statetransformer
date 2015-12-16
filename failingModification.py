@@ -74,19 +74,34 @@ class NodeVisitor(object):
 
 def addTestFunction(ast, expectedOutput, testFxn, initVars, initList):
     varList = []
-    i = 0
-    for v in initVars:
-	if ('(' in v):
-	    exprLen = len(v[v.index('(')+1:v.index(')')].split(','))
-	    exprList = []
-	    for j in range(exprLen):
-	      exprList.append(initList[i])
-	      i += 1
-	    newVar = c_ast.FuncCall(c_ast.ID(v), c_ast.ExprList(exprList))
-	else:
-	    newVar = c_ast.Assignment('=', c_ast.ID(v), c_ast.Constant('int', initList[i]))
-	    i += 1
-	varList.append(newVar)
+    exprList = []
+    fxnName = ''
+    inFxn = False
+    listi = 0
+    for i in range(len(initVars)):
+        v = initVars[i]
+        if inFxn:
+            exprList.append(c_ast.Constant('int', initList[listi]))
+            listi += 1
+            if (')' in v):
+                inFxn = False
+                newVar = c_ast.FuncCall(c_ast.ID(fxnName), c_ast.ExprList(exprList))
+                varList.append(newVar)
+                exprList = []
+        else:
+            if ('(' in v):
+                fxnName = v[:v.index('(')]
+                if (v[v.index('(')+1] != ')'):
+                    inFxn = True
+                    exprList.append(c_ast.Constant('int', initList[listi]))
+                    listi += 1
+                else:
+                    newVar = c_ast.FuncCall(c_ast.ID(fxnName), c_ast.ExprList([]))
+                    varList.append(newVar)
+            else:
+                newVar = c_ast.Assignment('=', c_ast.ID(v), c_ast.Constant('int', initList[listi]))
+                listi += 1
+                varList.append(newVar)
     fxnDecl = c_ast.FuncDecl(None, c_ast.TypeDecl('klee_test_entry', [], c_ast.IdentifierType(['void'])))
     fxnCall = c_ast.FuncCall(c_ast.ID(testFxn), c_ast.ExprList([]))
     binaryOp = c_ast.BinaryOp('==', fxnCall, c_ast.Constant('int', expectedOutput))
@@ -94,7 +109,7 @@ def addTestFunction(ast, expectedOutput, testFxn, initVars, initList):
     ifTrue = c_ast.Compound([])
     blockItems = []
     for v in varList:
-	blockItems.append(v)
+        blockItems.append(v)
     blockItems.append(c_ast.If(binaryOp, ifTrue, ifFalse))
     fxnBody = c_ast.Compound(blockItems)
     fxnNode = c_ast.FuncDef(fxnDecl, None, fxnBody)
@@ -103,9 +118,9 @@ def addTestFunction(ast, expectedOutput, testFxn, initVars, initList):
 def show_decl_file(cFile, faultyLine, expectedOutput, testFxn, initVarFile, initList):
     initVars = []
     with open(initVarFile, 'rt') as f:
-	reader = csv.reader(f)
-	lists = list(reader)
-	initVars = lists[0]
+        reader = csv.reader(f)
+        lists = list(reader)
+        initVars = lists[0]
     ast = parse_file(cFile, use_cpp=True)
     v = NodeVisitor(faultyLine)
     v.visit(ast)
@@ -119,7 +134,7 @@ if __name__=='__main__':
             faultyLine = sys.argv[2] # faulty line number
             expectedOutput = sys.argv[3] # expected output
             testFxn = sys.argv[4]
-	    initVarFile = sys.argv[5]
+            initVarFile = sys.argv[5]
             initList = sys.argv[6:]
             show_decl_file(cFile, faultyLine, expectedOutput, testFxn, initVarFile, initList)
 
